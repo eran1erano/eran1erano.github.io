@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת שעות - כיתה א׳</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: linear-gradient(160deg,#f3e8ff,#fce7f3); min-height: 100vh; color: #3b0764; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card { background: #fff; border-radius: 18px; box-shadow: 0 8px 30px rgba(107,33,168,.12); padding: 28px 22px; }
+  h1 { font-size: 1.5rem; text-align: center; margin-bottom: 6px; }
+  .sub { text-align: center; color: #7c3aed; font-size: .95rem; margin-bottom: 20px; }
+  input[type=email] { width: 100%; padding: 12px 14px; border: 2px solid #e9d5ff; border-radius: 12px; font-size: 1rem; margin-bottom: 12px; direction: ltr; text-align: left; }
+  button.primary { width: 100%; padding: 13px; background: #9333ea; color: #fff; border: 0; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
+  button.primary:hover { background: #7e22ce; }
+  .msg { text-align: center; margin-top: 14px; font-size: .95rem; min-height: 1.4em; }
+  .msg.ok { color: #15803d; } .msg.err { color: #b91c1c; }
+  .note { text-align: center; color: #a78bfa; font-size: .8rem; margin-top: 18px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .topbar .who { font-size: .8rem; color: #8b5cf6; direction: ltr; }
+  button.link { background: none; border: 0; color: #9333ea; font-size: .85rem; cursor: pointer; text-decoration: underline; }
+  .days { display: flex; gap: 6px; margin-bottom: 16px; }
+  .days button { flex: 1; padding: 9px 0; border: 1.5px solid #e9d5ff; background: #faf5ff; border-radius: 10px; font-size: .9rem; cursor: pointer; color: #6d28d9; }
+  .days button.active { background: #9333ea; color: #fff; border-color: #9333ea; font-weight: 700; }
+  .slot { display: flex; gap: 12px; align-items: center; background: #faf5ff; border: 1px solid #ede9fe; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; }
+  .slot .time { min-width: 96px; font-weight: 700; color: #7c3aed; font-size: .88rem; direction: ltr; text-align: center; }
+  .slot .what { flex: 1; }
+  .slot .what .subject { font-weight: 700; font-size: 1.02rem; }
+  .slot .what .teacher { color: #8b5cf6; font-size: .85rem; }
+  .slot.brk { background: #ecfdf5; border-color: #bbf7d0; justify-content: center; color: #15803d; font-weight: 600; }
+  .slot.brk .time { color: #16a34a; }
+  .slot.shabbat { background: #fef3c7; border-color: #fde68a; justify-content: center; font-weight: 700; color: #92400e; }
+  .hidden { display: none; }
+  .print-btn { margin-inline-start: 8px; padding: 7px 12px; border: 1.5px solid #d8b4fe; background: #faf5ff; color: #7e22ce; border-radius: 9px; font-weight: 700; cursor: pointer; }
+  .print-week { display: none; }
+  @media print {
+    body { background: #fff; color: #111; }
+    .wrap { max-width: none; padding: 0; }
+    #loginCard, .topbar, .days, #slots { display: none !important; }
+    #appCard, .print-week { display: block !important; box-shadow: none; padding: 0; }
+    .print-week h1 { margin: 0 0 12px; }
+    .print-day { break-inside: avoid; margin-bottom: 13px; }
+    .print-day h2 { font-size: 1rem; margin: 0 0 5px; border-bottom: 2px solid #6d28d9; padding-bottom: 3px; }
+    .print-row { display: grid; grid-template-columns: 110px 1fr; border-bottom: 1px solid #ddd; padding: 3px 0; font-size: .82rem; }
+  }
+  .spin { text-align: center; color: #a78bfa; padding: 30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loginCard" class="card">
+    <h1>מערכת שעות - כיתה א׳</h1>
+    <p class="sub">אתר פרטי למשפחה בלבד 🔒</p>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="המייל שלכם" required autocomplete="email">
+      <button class="primary" type="submit">שלחו לי קישור כניסה</button>
+    </form>
+    <p class="msg" id="loginMsg"></p>
+    <p class="note">נכנסים עם קישור חד-פעמי שנשלח למייל - בלי סיסמה.</p>
+  </div>
+
+  <div id="appCard" class="card hidden">
+    <div class="topbar">
+      <h1 id="appTitle">מערכת שעות</h1>
+      <div>
+        <div class="who" id="who"></div>
+        <button class="print-btn" id="printWeek" type="button">הדפסת המערכת 🖨️</button><button class="link" id="logout">יציאה</button>
+      </div>
+    </div>
+    <div class="days" id="dayTabs"></div>
+    <div id="slots"></div>
+    <div id="printView" class="print-week"></div>
+  </div>
+
+  <div id="loading" class="spin hidden">טוען…</div>
+</div>
+
+<script>
+const SUPA_URL = 'https://jcdjvmrgmeidvxiwnibv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjZGp2bXJnbWVpZHZ4aXduaWJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzMzMzQsImV4cCI6MjEwNDk0OTMzNH0.BSCMwA3LYKZqjUHgyIktDFAwYSzpvHoOdagAGvt2Hg4';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי'];
+const $ = id => document.getElementById(id);
+let TT = null, curDay = null;
+
+function show(id){ ['loginCard','appCard','loading'].forEach(x => $(x).classList.toggle('hidden', x!==id)); }
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('email').value.trim();
+  $('loginMsg').className = 'msg'; $('loginMsg').textContent = 'שולח…';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+  if (error) { $('loginMsg').className='msg err'; $('loginMsg').textContent = 'שגיאה: ' + error.message; }
+  else { $('loginMsg').className='msg ok'; $('loginMsg').textContent = 'נשלח קישור כניסה למייל. לחצו עליו כדי להיכנס ✉️'; }
+});
+
+async function boot(){
+  show('loading');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { show('loginCard'); return; }
+  const { data, error } = await sb.from('timetable').select('data').eq('id',1).single();
+  if (error || !data) {
+    await sb.auth.signOut();
+    show('loginCard');
+    $('loginMsg').className='msg err';
+    $('loginMsg').textContent = 'לחשבון המייל הזה אין הרשאת צפייה.';
+    return;
+  }
+  TT = data.data;
+  $('appTitle').textContent = TT.title;
+  $('who').textContent = session.user.email;
+  const today = new Date().getDay(); // 0=Sun..6=Sat
+  curDay = today <= 5 ? DAYS[today] : null;
+  renderTabs(); renderDay();
+  show('appCard');
+}
+
+function renderTabs(){
+  const el = $('dayTabs'); el.innerHTML = '';
+  DAYS.forEach(d => {
+    const b = document.createElement('button');
+    b.textContent = d;
+    if (d === curDay) b.classList.add('active');
+    b.onclick = () => { curDay = d; renderTabs(); renderDay(); };
+    el.appendChild(b);
+  });
+}
+
+function splitSubject(s){
+  const i = s.indexOf(' · ');
+  if (i === -1) return {subject: s, teacher: ''};
+  return {subject: s.slice(0,i), teacher: s.slice(i+3)};
+}
+
+function renderDay(){
+  const el = $('slots'); el.innerHTML = '';
+  if (!curDay) {
+    el.innerHTML = '<div class="slot shabbat">שבת שלום! 🕯️<br>אין לימודים היום - בחרו יום אחר</div>';
+    return;
+  }
+  const day = TT.days[curDay];
+  for (const slot of TT.slots) {
+    if (day.short && (slot.key === 's5' || slot.key === 'b2')) continue;
+    const div = document.createElement('div');
+    const time = slot.start + ' - ' + slot.end;
+    if (slot.brk) { div.className = 'slot brk'; div.innerHTML = '<div class="time">' + time + '</div><div>☕ ' + slot.label + '</div>'; }
+    else {
+      const content = day[slot.key];
+      if (!content) continue;
+      if (/^שבת שלום/.test(content)) { div.className = 'slot shabbat'; div.innerHTML = '<div class="time">' + time + '</div><div>🕯️ ' + content + '</div>'; }
+      else {
+        const p = splitSubject(content);
+        div.className = 'slot';
+        div.innerHTML = '<div class="time">' + time + '</div><div class="what"><div class="subject">' + p.subject + '</div>' + (p.teacher ? '<div class="teacher">' + p.teacher + '</div>' : '') + '</div>';
+      }
+    }
+    el.appendChild(div);
+  }
+}
+
+function buildPrintWeek(){
+  const out = $('printView');
+  out.innerHTML = '<h1>מערכת שעות - כיתה א׳</h1>';
+  for (const name of DAYS) {
+    const day = TT.days[name];
+    const section = document.createElement('section'); section.className = 'print-day';
+    section.innerHTML = '<h2>יום ' + name + '</h2>';
+    for (const slot of TT.slots) {
+      if (day.short && (slot.key === 's5' || slot.key === 'b2')) continue;
+      const content = slot.brk ? slot.label : day[slot.key];
+      if (!content) continue;
+      const row = document.createElement('div'); row.className = 'print-row';
+      row.innerHTML = '<span>' + slot.start + ' - ' + slot.end + '</span><span>' + content + '</span>';
+      section.appendChild(row);
+    }
+    out.appendChild(section);
+  }
+}
+$('printWeek').onclick = () => { buildPrintWeek(); window.print(); };
+window.addEventListener('beforeprint', buildPrintWeek);
+
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN') boot(); });
+boot();
+</script>
+</body>
+</html>
+
