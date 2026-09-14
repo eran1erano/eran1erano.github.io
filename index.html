@@ -12,7 +12,7 @@
   .card { background: #fff; border-radius: 18px; box-shadow: 0 8px 30px rgba(107,33,168,.12); padding: 28px 22px; }
   h1 { font-size: 1.5rem; text-align: center; margin-bottom: 6px; }
   .sub { text-align: center; color: #7c3aed; font-size: .95rem; margin-bottom: 20px; }
-  input[type=email] { width: 100%; padding: 12px 14px; border: 2px solid #e9d5ff; border-radius: 12px; font-size: 1rem; margin-bottom: 12px; direction: ltr; text-align: left; }
+  input[type=email], input[type=password] { width: 100%; padding: 12px 14px; border: 2px solid #e9d5ff; border-radius: 12px; font-size: 1rem; margin-bottom: 12px; direction: ltr; text-align: left; }
   button.primary { width: 100%; padding: 13px; background: #9333ea; color: #fff; border: 0; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
   button.primary:hover { background: #7e22ce; }
   .msg { text-align: center; margin-top: 14px; font-size: .95rem; min-height: 1.4em; }
@@ -56,10 +56,11 @@
     <p class="sub">אתר פרטי למשפחה בלבד 🔒</p>
     <form id="loginForm">
       <input type="email" id="email" placeholder="המייל שלכם" required autocomplete="email">
-      <button class="primary" type="submit">שלחו לי קישור כניסה</button>
+      <input type="password" id="password" placeholder="הסיסמה" required autocomplete="current-password">
+      <button class="primary" type="submit">כניסה</button>
     </form>
     <p class="msg" id="loginMsg"></p>
-    <p class="note">נכנסים עם קישור חד-פעמי שנשלח למייל - בלי סיסמה.</p>
+    <p class="note">נכנסים עם המייל והסיסמה שהוגדרו למשפחה.</p>
   </div>
 
   <div id="appCard" class="card hidden">
@@ -67,9 +68,14 @@
       <h1 id="appTitle">מערכת שעות</h1>
       <div>
         <div class="who" id="who"></div>
-        <button class="print-btn" id="printWeek" type="button">הדפסת המערכת 🖨️</button><button class="link" id="logout">יציאה</button>
+        <button class="print-btn" id="printWeek" type="button">הדפסת המערכת 🖨️</button><button class="link" id="changepw" type="button">שינוי סיסמה</button><button class="link" id="logout">יציאה</button>
       </div>
     </div>
+    <form id="pwForm" class="hidden" style="margin-bottom:14px">
+      <input type="password" id="newpw" placeholder="סיסמה חדשה (לפחות 6 תווים)" required minlength="6" autocomplete="new-password">
+      <button class="primary" type="submit">עדכון סיסמה</button>
+      <p class="msg" id="pwMsg"></p>
+    </form>
     <div class="days" id="dayTabs"></div>
     <div id="slots"></div>
     <div id="printView" class="print-week"></div>
@@ -91,10 +97,22 @@ function show(id){ ['loginCard','appCard','loading'].forEach(x => $(x).classList
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email = $('email').value.trim();
-  $('loginMsg').className = 'msg'; $('loginMsg').textContent = 'שולח…';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-  if (error) { $('loginMsg').className='msg err'; $('loginMsg').textContent = 'שגיאה: ' + error.message; }
-  else { $('loginMsg').className='msg ok'; $('loginMsg').textContent = 'נשלח קישור כניסה למייל. לחצו עליו כדי להיכנס ✉️'; }
+  const password = $('password').value;
+  $('loginMsg').className = 'msg'; $('loginMsg').textContent = 'מתחבר…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    $('loginMsg').className='msg err';
+    $('loginMsg').textContent = error.message === 'Invalid login credentials' ? 'המייל או הסיסמה שגויים.' : 'שגיאה: ' + error.message;
+  }
+});
+
+$('changepw').onclick = () => { $('pwForm').classList.toggle('hidden'); };
+$('pwForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('pwMsg').className='msg'; $('pwMsg').textContent = 'מעדכן…';
+  const { error } = await sb.auth.updateUser({ password: $('newpw').value });
+  if (error) { $('pwMsg').className='msg err'; $('pwMsg').textContent = 'שגיאה: ' + error.message; }
+  else { $('pwMsg').className='msg ok'; $('pwMsg').textContent = 'הסיסמה עודכנה ✓'; $('newpw').value=''; }
 });
 
 async function boot(){
@@ -188,4 +206,5 @@ boot();
 </script>
 </body>
 </html>
+
 
