@@ -1,51 +1,156 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>מערכת השעות שלי</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת שעות - כיתה ד׳</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--ink:#172033;--muted:#6d7585;--line:#e7e9ef;--bg:#f5f7fb;--card:#fff;--accent:#6c5ce7;--accent2:#8b7cf6;--danger:#d64545;--shadow:0 18px 55px rgba(26,35,58,.10)}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Hebrew",sans-serif;color:var(--ink);background:radial-gradient(circle at 90% 0,#eeeaff 0,transparent 34%),var(--bg);min-height:100vh}.app{max-width:1280px;margin:auto;padding:28px 22px 48px}header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:14px}.logo{width:54px;height:54px;border-radius:17px;background:linear-gradient(145deg,var(--accent),#9a8cff);display:grid;place-items:center;color:#fff;font-size:27px;box-shadow:0 10px 25px rgba(108,92,231,.28)}h1{margin:0;font-size:clamp(24px,3vw,36px)}.subtitle{color:var(--muted);margin-top:5px;font-size:14px}.actions{display:flex;gap:9px;flex-wrap:wrap}button,.file-label{border:0;border-radius:12px;padding:11px 15px;font-weight:700;font-size:14px;cursor:pointer;background:#fff;color:var(--ink);box-shadow:0 2px 7px rgba(0,0,0,.06);transition:.16s}.primary{background:var(--accent);color:#fff}.icon-btn:hover,button:hover,.file-label:hover{transform:translateY(-1px)}.name-card{background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.9);border-radius:18px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px;box-shadow:0 6px 22px rgba(26,35,58,.06)}.name-card label{color:var(--muted);font-size:13px}.name-card input{border:0;border-bottom:2px solid var(--line);font-size:18px;font-weight:700;padding:5px 2px;background:transparent;min-width:180px;color:var(--ink)}.name-card input:focus{outline:0;border-color:var(--accent)}.board{background:var(--card);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;border:1px solid #eff0f4}.scroll{overflow:auto}.week{display:grid;grid-template-columns:74px repeat(6,minmax(145px,1fr));min-width:944px}.head{position:sticky;top:0;z-index:5;background:#fafaff;border-bottom:1px solid var(--line);font-weight:800;text-align:center;padding:15px 8px}.head.time{right:0;z-index:7}.time-cell{position:sticky;right:0;background:#fbfbfd;z-index:3;color:var(--muted);font-size:12px;text-align:center;padding-top:8px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);height:64px}.cell{height:64px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;cursor:pointer;background:linear-gradient(#fff,#fff)}.cell:hover{background:#faf9ff}.cell:hover:after{content:"+";position:absolute;inset:0;display:grid;place-items:center;color:#c5bdff;font-size:22px}.lesson{position:absolute;z-index:4;right:5px;left:5px;border-radius:10px;padding:7px 9px;color:#fff;overflow:hidden;box-shadow:0 6px 16px rgba(26,35,58,.16);cursor:pointer;border-right:4px solid rgba(255,255,255,.45)}.lesson strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lesson small{display:block;font-size:11px;opacity:.92;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.empty{padding:30px;text-align:center;color:var(--muted)}dialog{border:0;padding:0;border-radius:22px;box-shadow:0 25px 90px rgba(16,20,38,.28);width:min(520px,calc(100% - 28px));color:var(--ink)}dialog::backdrop{background:rgba(19,25,42,.46);backdrop-filter:blur(3px)}.modal{padding:24px}.modal h2{margin:0 0 20px;font-size:23px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700;color:#525b6d}.field input,.field select{width:100%;border:1px solid #dde0e8;border-radius:11px;padding:11px 12px;font-size:15px;background:#fff;color:var(--ink)}.field input:focus,.field select:focus{outline:2px solid #dcd7ff;border-color:var(--accent)}.colors{display:flex;gap:9px;flex-wrap:wrap}.color{width:30px;height:30px;padding:0;border-radius:50%;box-shadow:none;border:3px solid transparent}.color.selected{border-color:#222;transform:scale(1.08)}.modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:8px}.left-actions,.right-actions{display:flex;gap:9px}.danger{color:var(--danger);background:#fff0f0}.hint{padding:12px 18px;color:var(--muted);font-size:12px;text-align:center;background:#fafbfe}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#172033;color:#fff;padding:11px 17px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:720px){.app{padding:18px 12px 34px}header{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button,.file-label{flex:1;text-align:center;padding:10px 8px}.name-card{align-items:flex-start;flex-direction:column}.name-card input{width:100%}.board{border-radius:16px}.grid2{grid-template-columns:1fr}.field.full{grid-column:auto}.modal{padding:20px}.week{grid-template-columns:62px repeat(6,minmax(128px,1fr));min-width:830px}}
-@media print{body{background:#fff}.app{padding:0;max-width:none}header .actions,.hint{display:none}.board{box-shadow:none}.week{min-width:0;grid-template-columns:55px repeat(6,1fr)}.name-card{box-shadow:none}.cell,.time-cell{height:52px}.lesson{font-size:9px}}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: linear-gradient(160deg,#f3e8ff,#fce7f3); min-height: 100vh; color: #3b0764; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card { background: #fff; border-radius: 18px; box-shadow: 0 8px 30px rgba(107,33,168,.12); padding: 28px 22px; }
+  h1 { font-size: 1.5rem; text-align: center; margin-bottom: 6px; }
+  .sub { text-align: center; color: #7c3aed; font-size: .95rem; margin-bottom: 20px; }
+  input[type=email] { width: 100%; padding: 12px 14px; border: 2px solid #e9d5ff; border-radius: 12px; font-size: 1rem; margin-bottom: 12px; direction: ltr; text-align: left; }
+  button.primary { width: 100%; padding: 13px; background: #9333ea; color: #fff; border: 0; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
+  button.primary:hover { background: #7e22ce; }
+  .msg { text-align: center; margin-top: 14px; font-size: .95rem; min-height: 1.4em; }
+  .msg.ok { color: #15803d; } .msg.err { color: #b91c1c; }
+  .note { text-align: center; color: #a78bfa; font-size: .8rem; margin-top: 18px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .topbar .who { font-size: .8rem; color: #8b5cf6; direction: ltr; }
+  button.link { background: none; border: 0; color: #9333ea; font-size: .85rem; cursor: pointer; text-decoration: underline; }
+  .days { display: flex; gap: 6px; margin-bottom: 16px; }
+  .days button { flex: 1; padding: 9px 0; border: 1.5px solid #e9d5ff; background: #faf5ff; border-radius: 10px; font-size: .9rem; cursor: pointer; color: #6d28d9; }
+  .days button.active { background: #9333ea; color: #fff; border-color: #9333ea; font-weight: 700; }
+  .slot { display: flex; gap: 12px; align-items: center; background: #faf5ff; border: 1px solid #ede9fe; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; }
+  .slot .time { min-width: 96px; font-weight: 700; color: #7c3aed; font-size: .88rem; direction: ltr; text-align: center; }
+  .slot .what { flex: 1; }
+  .slot .what .subject { font-weight: 700; font-size: 1.02rem; }
+  .slot .what .teacher { color: #8b5cf6; font-size: .85rem; }
+  .slot.brk { background: #ecfdf5; border-color: #bbf7d0; justify-content: center; color: #15803d; font-weight: 600; }
+  .slot.brk .time { color: #16a34a; }
+  .slot.shabbat { background: #fef3c7; border-color: #fde68a; justify-content: center; font-weight: 700; color: #92400e; }
+  .hidden { display: none; }
+  .spin { text-align: center; color: #a78bfa; padding: 30px; }
 </style>
 </head>
 <body>
-<div class="app">
-<header><div class="brand"><div class="logo">✦</div><div><h1>מערכת השעות שלי</h1><div class="subtitle">לוח שבועי פשוט ללימודים, חוגים ושיעורי בית</div></div></div><div class="actions"><button class="primary" id="addTop">+ שיעור חדש</button><button id="printBtn">הדפסה</button><button id="exportBtn">גיבוי</button><label class="file-label">שחזור<input id="importInput" type="file" accept="application/json" hidden></label></div></header>
-<section class="name-card"><div><label for="childName">שם הילדה</label><br><input id="childName" placeholder="למשל: נועה" maxlength="40"></div><div class="subtitle">המערכת נשמרת אוטומטית במכשיר הזה</div></section>
-<section class="board"><div class="scroll"><div class="week" id="week"></div></div><div class="hint">לחצו על משבצת ריקה להוספת שיעור, או על שיעור קיים לעריכה</div></section>
+<div class="wrap">
+
+  <div id="loginCard" class="card">
+    <h1>מערכת שעות - כיתה ד׳</h1>
+    <p class="sub">אתר פרטי למשפחה בלבד 🔒</p>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="המייל שלכם" required autocomplete="email">
+      <button class="primary" type="submit">שלחו לי קישור כניסה</button>
+    </form>
+    <p class="msg" id="loginMsg"></p>
+    <p class="note">נכנסים עם קישור חד-פעמי שנשלח למייל - בלי סיסמה.</p>
+  </div>
+
+  <div id="appCard" class="card hidden">
+    <div class="topbar">
+      <h1 id="appTitle">מערכת שעות</h1>
+      <div>
+        <div class="who" id="who"></div>
+        <button class="link" id="logout">יציאה</button>
+      </div>
+    </div>
+    <div class="days" id="dayTabs"></div>
+    <div id="slots"></div>
+  </div>
+
+  <div id="loading" class="spin hidden">טוען…</div>
 </div>
-<dialog id="lessonDialog"><form class="modal" id="lessonForm"><h2 id="modalTitle">שיעור חדש</h2><div class="grid2"><div class="field full"><label>מקצוע / פעילות</label><input id="subject" required maxlength="60" placeholder="למשל: חשבון"></div><div class="field"><label>יום</label><select id="day" required></select></div><div class="field"><label>מורה / מדריך</label><input id="teacher" maxlength="50" placeholder="לא חובה"></div><div class="field"><label>שעת התחלה</label><input id="start" type="time" min="08:00" max="20:00" step="1800" required></div><div class="field"><label>שעת סיום</label><input id="end" type="time" min="08:30" max="21:00" step="1800" required></div><div class="field full"><label>מיקום / הערה</label><input id="location" maxlength="80" placeholder="כיתה, זום או מה להביא"></div><div class="field full"><label>צבע</label><div class="colors" id="colors"></div></div></div><div class="modal-actions"><div class="right-actions"><button class="primary" type="submit">שמירה</button><button type="button" id="cancelBtn">ביטול</button></div><div class="left-actions"><button class="danger" type="button" id="deleteBtn" hidden>מחיקה</button></div></div></form></dialog>
-<div class="toast" id="toast"></div>
+
 <script>
-const DAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי'];
-const COLORS=['#6c5ce7','#2487ce','#17a589','#e67e22','#d35472','#7d5a50','#455a64'];
-const START=8, END=20, SLOT=30, ROWS=(END-START)*2;
-const key='daughter-timetable-v1';
-let state={name:'',lessons:[]}, editing=null, selectedColor=COLORS[0];
-const $=s=>document.querySelector(s);
-function load(){try{const v=JSON.parse(localStorage.getItem(key));if(v&&Array.isArray(v.lessons)) state=v}catch(e){} $('#childName').value=state.name||''}
-function save(){state.name=$('#childName').value.trim();localStorage.setItem(key,JSON.stringify(state));}
-function minutes(t){const [h,m]=t.split(':').map(Number);return h*60+m}
-function timeFromRow(row){let mins=START*60+row*SLOT;return String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0')}
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function render(){const w=$('#week');w.innerHTML='<div class="head time">שעה</div>'+DAYS.map(d=>`<div class="head">${d}</div>`).join('');for(let r=0;r<ROWS;r++){const hour=timeFromRow(r);w.insertAdjacentHTML('beforeend',`<div class="time-cell">${hour}</div>`);for(let d=0;d<6;d++){const cell=document.createElement('div');cell.className='cell';cell.dataset.day=d;cell.dataset.row=r;cell.onclick=()=>openNew(d,hour);w.appendChild(cell)}}state.lessons.forEach((l,i)=>{const startMin=minutes(l.start),endMin=minutes(l.end);const startRow=(startMin-START*60)/SLOT;if(startRow<0||startRow>=ROWS)return;const cell=w.querySelector(`.cell[data-day="${l.day}"][data-row="${startRow}"]`);if(!cell)return;const el=document.createElement('div');el.className='lesson';el.style.background=l.color||COLORS[0];el.style.top='4px';el.style.height=Math.max(56,(endMin-startMin)/SLOT*64-8)+'px';el.innerHTML=`<strong>${esc(l.subject)}</strong><small>${l.start}–${l.end}${l.teacher?' · '+esc(l.teacher):''}</small>${l.location?`<small>${esc(l.location)}</small>`:''}`;el.onclick=e=>{e.stopPropagation();openEdit(i)};cell.appendChild(el)})}
-function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function initDialog(){DAYS.forEach((d,i)=>$('#day').insertAdjacentHTML('beforeend',`<option value="${i}">${d}</option>`));COLORS.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='color';b.style.background=c;b.setAttribute('aria-label','בחירת צבע');b.onclick=()=>pickColor(c);$('#colors').appendChild(b)});pickColor(COLORS[0])}
-function pickColor(c){selectedColor=c;document.querySelectorAll('.color').forEach(b=>b.classList.toggle('selected',b.style.backgroundColor===toRGB(c)))}
-function toRGB(hex){const n=parseInt(hex.slice(1),16);return `rgb(${n>>16}, ${(n>>8)&255}, ${n&255})`}
-function openNew(day=0,start='16:00'){editing=null;$('#modalTitle').textContent='שיעור חדש';$('#lessonForm').reset();$('#day').value=day;$('#start').value=start;let m=minutes(start)+60;$('#end').value=String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');$('#deleteBtn').hidden=true;pickColor(COLORS[0]);$('#lessonDialog').showModal();setTimeout(()=>$('#subject').focus(),50)}
-function openEdit(i){editing=i;const l=state.lessons[i];$('#modalTitle').textContent='עריכת שיעור';['subject','teacher','start','end','location'].forEach(k=>$(`#${k}`).value=l[k]||'');$('#day').value=l.day;$('#deleteBtn').hidden=false;pickColor(l.color||COLORS[0]);$('#lessonDialog').showModal()}
-$('#lessonForm').onsubmit=e=>{e.preventDefault();const l={subject:$('#subject').value.trim(),day:Number($('#day').value),teacher:$('#teacher').value.trim(),start:$('#start').value,end:$('#end').value,location:$('#location').value.trim(),color:selectedColor};if(minutes(l.end)<=minutes(l.start)){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return}if(minutes(l.start)<START*60||minutes(l.end)>21*60){toast('אפשר לשבץ בין 08:00 ל-21:00');return}const overlap=state.lessons.some((x,i)=>i!==editing&&x.day===l.day&&minutes(l.start)<minutes(x.end)&&minutes(l.end)>minutes(x.start));if(overlap&&!confirm('השעה חופפת לשיעור אחר. לשמור בכל זאת?'))return;if(editing===null)state.lessons.push(l);else state.lessons[editing]=l;save();render();$('#lessonDialog').close();toast('נשמר')};
-$('#deleteBtn').onclick=()=>{if(editing!==null&&confirm('למחוק את השיעור?')){state.lessons.splice(editing,1);save();render();$('#lessonDialog').close();toast('השיעור נמחק')}};
-$('#cancelBtn').onclick=()=>$('#lessonDialog').close();
-$('#addTop').onclick=()=>openNew();$('#printBtn').onclick=()=>window.print();
-$('#childName').oninput=save;
-$('#exportBtn').onclick=()=>{save();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='מערכת-שעות.json';a.click();URL.revokeObjectURL(a.href);toast('קובץ הגיבוי ירד')};
-$('#importInput').onchange=async e=>{try{const data=JSON.parse(await e.target.files[0].text());if(!Array.isArray(data.lessons))throw 0;state={name:data.name||'',lessons:data.lessons};save();load();render();toast('המערכת שוחזרה')}catch{toast('קובץ הגיבוי לא תקין')}e.target.value=''};
-load();initDialog();render();
+const SUPA_URL = 'https://jcdjvmrgmeidvxiwnibv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjZGp2bXJnbWVpZHZ4aXduaWJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzMzMzQsImV4cCI6MjEwNDk0OTMzNH0.BSCMwA3LYKZqjUHgyIktDFAwYSzpvHoOdagAGvt2Hg4';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי'];
+const $ = id => document.getElementById(id);
+let TT = null, curDay = null;
+
+function show(id){ ['loginCard','appCard','loading'].forEach(x => $(x).classList.toggle('hidden', x!==id)); }
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('email').value.trim();
+  $('loginMsg').className = 'msg'; $('loginMsg').textContent = 'שולח…';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+  if (error) { $('loginMsg').className='msg err'; $('loginMsg').textContent = 'שגיאה: ' + error.message; }
+  else { $('loginMsg').className='msg ok'; $('loginMsg').textContent = 'נשלח קישור כניסה למייל. לחצו עליו כדי להיכנס ✉️'; }
+});
+
+async function boot(){
+  show('loading');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { show('loginCard'); return; }
+  const { data, error } = await sb.from('timetable').select('data').eq('id',1).single();
+  if (error || !data) {
+    await sb.auth.signOut();
+    show('loginCard');
+    $('loginMsg').className='msg err';
+    $('loginMsg').textContent = 'לחשבון המייל הזה אין הרשאת צפייה.';
+    return;
+  }
+  TT = data.data;
+  $('appTitle').textContent = TT.title;
+  $('who').textContent = session.user.email;
+  const today = new Date().getDay(); // 0=Sun..6=Sat
+  curDay = today <= 5 ? DAYS[today] : null;
+  renderTabs(); renderDay();
+  show('appCard');
+}
+
+function renderTabs(){
+  const el = $('dayTabs'); el.innerHTML = '';
+  DAYS.forEach(d => {
+    const b = document.createElement('button');
+    b.textContent = d;
+    if (d === curDay) b.classList.add('active');
+    b.onclick = () => { curDay = d; renderTabs(); renderDay(); };
+    el.appendChild(b);
+  });
+}
+
+function splitSubject(s){
+  const i = s.indexOf(' · ');
+  if (i === -1) return {subject: s, teacher: ''};
+  return {subject: s.slice(0,i), teacher: s.slice(i+3)};
+}
+
+function renderDay(){
+  const el = $('slots'); el.innerHTML = '';
+  if (!curDay) {
+    el.innerHTML = '<div class="slot shabbat">שבת שלום! 🕯️<br>אין לימודים היום - בחרו יום אחר</div>';
+    return;
+  }
+  const day = TT.days[curDay];
+  for (const slot of TT.slots) {
+    if (day.short && (slot.key === 's5' || slot.key === 'b2')) continue;
+    const div = document.createElement('div');
+    const time = slot.start + ' - ' + slot.end;
+    if (slot.brk) { div.className = 'slot brk'; div.innerHTML = '<div class="time">' + time + '</div><div>☕ ' + slot.label + '</div>'; }
+    else {
+      const content = day[slot.key];
+      if (!content) continue;
+      if (/^שבת שלום/.test(content)) { div.className = 'slot shabbat'; div.innerHTML = '<div class="time">' + time + '</div><div>🕯️ ' + content + '</div>'; }
+      else {
+        const p = splitSubject(content);
+        div.className = 'slot';
+        div.innerHTML = '<div class="time">' + time + '</div><div class="what"><div class="subject">' + p.subject + '</div>' + (p.teacher ? '<div class="teacher">' + p.teacher + '</div>' : '') + '</div>';
+      }
+    }
+    el.appendChild(div);
+  }
+}
+
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN') boot(); });
+boot();
 </script>
 </body>
 </html>
