@@ -33,6 +33,18 @@
   .slot.brk .time { color: #16a34a; }
   .slot.shabbat { background: #fef3c7; border-color: #fde68a; justify-content: center; font-weight: 700; color: #92400e; }
   .hidden { display: none; }
+  .print-btn { margin-inline-start: 8px; padding: 7px 12px; border: 1.5px solid #d8b4fe; background: #faf5ff; color: #7e22ce; border-radius: 9px; font-weight: 700; cursor: pointer; }
+  .print-week { display: none; }
+  @media print {
+    body { background: #fff; color: #111; }
+    .wrap { max-width: none; padding: 0; }
+    #loginCard, .topbar, .days, #slots { display: none !important; }
+    #appCard, .print-week { display: block !important; box-shadow: none; padding: 0; }
+    .print-week h1 { margin: 0 0 12px; }
+    .print-day { break-inside: avoid; margin-bottom: 13px; }
+    .print-day h2 { font-size: 1rem; margin: 0 0 5px; border-bottom: 2px solid #6d28d9; padding-bottom: 3px; }
+    .print-row { display: grid; grid-template-columns: 110px 1fr; border-bottom: 1px solid #ddd; padding: 3px 0; font-size: .82rem; }
+  }
   .spin { text-align: center; color: #a78bfa; padding: 30px; }
 </style>
 </head>
@@ -55,11 +67,12 @@
       <h1 id="appTitle">מערכת שעות</h1>
       <div>
         <div class="who" id="who"></div>
-        <button class="link" id="logout">יציאה</button>
+        <button class="print-btn" id="printWeek" type="button">הדפסת המערכת 🖨️</button><button class="link" id="logout">יציאה</button>
       </div>
     </div>
     <div class="days" id="dayTabs"></div>
     <div id="slots"></div>
+    <div id="printView" class="print-week"></div>
   </div>
 
   <div id="loading" class="spin hidden">טוען…</div>
@@ -148,9 +161,31 @@ function renderDay(){
   }
 }
 
+function buildPrintWeek(){
+  const out = $('printView');
+  out.innerHTML = '<h1>מערכת שעות - כיתה א׳</h1>';
+  for (const name of DAYS) {
+    const day = TT.days[name];
+    const section = document.createElement('section'); section.className = 'print-day';
+    section.innerHTML = '<h2>יום ' + name + '</h2>';
+    for (const slot of TT.slots) {
+      if (day.short && (slot.key === 's5' || slot.key === 'b2')) continue;
+      const content = slot.brk ? slot.label : day[slot.key];
+      if (!content) continue;
+      const row = document.createElement('div'); row.className = 'print-row';
+      row.innerHTML = '<span>' + slot.start + ' - ' + slot.end + '</span><span>' + content + '</span>';
+      section.appendChild(row);
+    }
+    out.appendChild(section);
+  }
+}
+$('printWeek').onclick = () => { buildPrintWeek(); window.print(); };
+window.addEventListener('beforeprint', buildPrintWeek);
+
 $('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN') boot(); });
 boot();
 </script>
 </body>
 </html>
+
